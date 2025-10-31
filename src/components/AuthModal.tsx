@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { X, Loader2 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -15,6 +15,13 @@ export default function AuthModal({ mode, onClose, onSwitchMode }: AuthModalProp
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const { signIn, signUp } = useAuth();
+  const modalRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (modalRef.current) {
+      modalRef.current.scrollTop = 0;
+    }
+  }, [mode]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -45,7 +52,8 @@ export default function AuthModal({ mode, onClose, onSwitchMode }: AuthModalProp
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4" onClick={onClose}>
       <div
-        className="bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl w-full max-w-md"
+        ref={modalRef}
+        className="bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-start justify-between p-6 border-b border-slate-800">
@@ -67,7 +75,7 @@ export default function AuthModal({ mode, onClose, onSwitchMode }: AuthModalProp
           </button>
         </div>
 
-        <div className="p-8 max-h-[calc(90vh-120px)] overflow-y-auto">
+        <div className="p-8">
 
           <form onSubmit={handleSubmit} className="space-y-4">
             {mode === 'signup' && (
