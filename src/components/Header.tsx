@@ -79,9 +79,10 @@ export default function Header() {
                 </button>
                 <button
                   onClick={handleSignUp}
-                  className="px-6 py-2 bg-gradient-to-r from-emerald-500 to-cyan-500 text-white rounded-lg font-medium hover:shadow-lg hover:shadow-emerald-500/50 transition-all duration-300 hover:scale-105"
+                  className="group px-6 py-2 bg-gradient-to-r from-emerald-500 to-cyan-500 text-white rounded-xl font-semibold hover:shadow-2xl hover:shadow-emerald-500/50 transition-all duration-300 hover:scale-105"
                 >
                   Başla
+                  <span className="inline-block ml-1 group-hover:translate-x-1 transition-transform">→</span>
                 </button>
               </>
             )}
@@ -143,9 +144,10 @@ export default function Header() {
                     </button>
                     <button
                       onClick={handleSignUp}
-                      className="px-6 py-2 bg-gradient-to-r from-emerald-500 to-cyan-500 text-white rounded-lg font-medium"
+                      className="group px-6 py-2 bg-gradient-to-r from-emerald-500 to-cyan-500 text-white rounded-xl font-semibold hover:shadow-2xl hover:shadow-emerald-500/50 transition-all duration-300 hover:scale-105"
                     >
                       Başla
+                      <span className="inline-block ml-1 group-hover:translate-x-1 transition-transform">→</span>
                     </button>
                   </>
                 )}
