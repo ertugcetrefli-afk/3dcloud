@@ -5,6 +5,7 @@ import { AuthProvider } from './contexts/AuthContext';
 import App from './App.tsx';
 import Dashboard from './pages/Dashboard';
 import ViewerDesigner from './pages/ViewerDesigner';
+import AdminPanel from './pages/AdminPanel';
 import NotFound from './pages/NotFound';
 import './index.css';
 
@@ -16,6 +17,7 @@ createRoot(document.getElementById('root')!).render(
           <Route path="/" element={<App />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/designer/:projectId" element={<ViewerDesigner />} />
+          <Route path="/admin" element={<AdminPanel />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
