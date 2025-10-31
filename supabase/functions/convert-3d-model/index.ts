@@ -183,27 +183,37 @@ Deno.serve(async (req: Request) => {
 });
 
 async function convertToGLB(file: Blob, format: string): Promise<{ blob: Blob; stats: ModelStats }> {
-  const formData = new FormData();
-  formData.append('file', file, `model.${format}`);
-  formData.append('format', 'glb');
-
   try {
-    const response = await fetch('https://api.gltf.report/v2/convert', {
-      method: 'POST',
-      body: formData,
-      headers: {
-        'Accept': 'application/octet-stream',
-      },
-    });
+    const alternativeApis = [
+      'https://convert.gltf.report/v2/convert',
+      'https://api.gltf-transform.dev/v1/convert'
+    ];
 
-    if (!response.ok) {
-      throw new Error(`Conversion service returned ${response.status}`);
+    for (const apiUrl of alternativeApis) {
+      try {
+        const formData = new FormData();
+        formData.append('file', file, `model.${format}`);
+        formData.append('format', 'glb');
+
+        const response = await fetch(apiUrl, {
+          method: 'POST',
+          body: formData,
+          headers: {
+            'Accept': 'application/octet-stream',
+          },
+        });
+
+        if (response.ok) {
+          const glbBlob = await response.blob();
+          const stats = await analyzeGLB(glbBlob);
+          return { blob: glbBlob, stats };
+        }
+      } catch (err) {
+        continue;
+      }
     }
 
-    const glbBlob = await response.blob();
-    const stats = await analyzeGLB(glbBlob);
-
-    return { blob: glbBlob, stats };
+    throw new Error('All conversion services unavailable');
   } catch (error) {
     throw new Error(`3D model conversion failed: ${error.message}`);
   }
