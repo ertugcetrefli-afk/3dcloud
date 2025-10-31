@@ -45,27 +45,29 @@ export default function AuthModal({ mode, onClose, onSwitchMode }: AuthModalProp
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4" onClick={onClose}>
       <div
-        className="bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-y-auto"
+        className="bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl w-full max-w-md"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="sticky top-0 bg-slate-900 z-10 flex justify-end p-4 border-b border-slate-800">
+        <div className="flex items-start justify-between p-6 border-b border-slate-800">
+          <div>
+            <h2 className="text-3xl font-bold text-white mb-2">
+              {mode === 'signup' ? 'Hesap Oluştur' : 'Giriş Yap'}
+            </h2>
+            <p className="text-slate-400">
+              {mode === 'signup'
+                ? '3D modellerinizi dönüştürmeye başlayın'
+                : 'Hesabınıza giriş yapın'}
+            </p>
+          </div>
           <button
             onClick={onClose}
-            className="text-slate-400 hover:text-white transition-colors"
+            className="text-slate-400 hover:text-white transition-colors flex-shrink-0 ml-4"
           >
             <X className="w-6 h-6" />
           </button>
         </div>
 
-        <div className="p-8">
-          <h2 className="text-3xl font-bold text-white mb-3">
-            {mode === 'signup' ? 'Hesap Oluştur' : 'Giriş Yap'}
-          </h2>
-          <p className="text-slate-400 mb-8">
-            {mode === 'signup'
-              ? '3D modellerinizi dönüştürmeye başlayın'
-              : 'Hesabınıza giriş yapın'}
-          </p>
+        <div className="p-8 max-h-[calc(90vh-120px)] overflow-y-auto">
 
           <form onSubmit={handleSubmit} className="space-y-4">
             {mode === 'signup' && (
