@@ -23,11 +23,11 @@ export default function ModelViewer({ src, poster, config }: ModelViewerProps) {
     if (!viewer) return;
 
     const handleLoad = () => {
-
+      console.log('Model loaded successfully');
     };
 
     const handleError = (event: any) => {
-
+      console.error('Model loading error:', event);
     };
 
     viewer.addEventListener('load', handleLoad);
@@ -36,14 +36,15 @@ export default function ModelViewer({ src, poster, config }: ModelViewerProps) {
     try {
       if (config.camera?.autoRotate) {
         viewer.setAttribute('auto-rotate', '');
+        viewer.setAttribute('auto-rotate-delay', '0');
         if (config.camera.autoRotateSpeed) {
-          viewer.setAttribute('auto-rotate-delay', '0');
+          viewer.setAttribute('rotation-per-second', `${config.camera.autoRotateSpeed * 30}deg`);
         }
       } else {
         viewer.removeAttribute('auto-rotate');
       }
 
-      if (config.scene?.exposure) {
+      if (config.scene?.exposure !== undefined) {
         viewer.setAttribute('exposure', config.scene.exposure.toString());
       }
 
@@ -53,9 +54,24 @@ export default function ModelViewer({ src, poster, config }: ModelViewerProps) {
 
       if (config.scene?.environmentImage && config.scene.environmentImage !== 'none') {
         viewer.setAttribute('environment-image', 'neutral');
+      } else {
+        viewer.removeAttribute('environment-image');
+      }
+
+      if (config.camera?.fieldOfView) {
+        viewer.setAttribute('field-of-view', `${config.camera.fieldOfView}deg`);
+      }
+
+      if (config.camera?.minDistance || config.camera?.maxDistance) {
+        if (config.camera.minDistance) {
+          viewer.setAttribute('min-camera-orbit', `auto auto ${config.camera.minDistance}m`);
+        }
+        if (config.camera.maxDistance) {
+          viewer.setAttribute('max-camera-orbit', `auto auto ${config.camera.maxDistance}m`);
+        }
       }
     } catch (error) {
-
+      console.error('Config application error:', error);
     }
 
     return () => {
@@ -81,11 +97,15 @@ export default function ModelViewer({ src, poster, config }: ModelViewerProps) {
       alt="3D Model"
       camera-controls
       touch-action="pan-y"
-      disable-zoom={false}
+      disable-zoom={config.camera?.disableZoom ? true : false}
+      disable-pan={config.camera?.disablePan ? true : false}
       ar={arModes.length > 0 ? true : undefined}
       ar-modes={arModes.length > 0 ? arModes.join(' ') : undefined}
-      shadow-intensity={config.scene?.shadowIntensity || 0.5}
-      exposure={config.scene?.exposure || 1}
+      shadow-intensity={config.scene?.shadowIntensity !== undefined ? config.scene.shadowIntensity : 0.5}
+      exposure={config.scene?.exposure !== undefined ? config.scene.exposure : 1}
+      camera-orbit={config.camera?.orbit || 'auto auto auto'}
+      animation-name={config.scene?.animationName || undefined}
+      autoplay={config.scene?.autoplay ? true : undefined}
       style={{
         width: '100%',
         height: '100%',
