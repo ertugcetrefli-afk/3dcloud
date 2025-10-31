@@ -45,12 +45,12 @@ export default function Footer() {
       <div className="max-w-7xl mx-auto px-6 py-16">
         <div className="grid grid-cols-2 md:grid-cols-6 gap-8 mb-12">
           <div className="col-span-2">
-            <div className="flex items-center gap-2 mb-4">
+            <a href="/" className="flex items-center gap-2 mb-4 w-fit">
               <div className="p-2 bg-gradient-to-br from-emerald-500 to-cyan-500 rounded-xl">
                 <Box className="w-6 h-6 text-white" />
               </div>
-              <span className="text-xl font-bold text-white">3D SaaS</span>
-            </div>
+              <span className="text-xl font-bold text-white">3DCloud</span>
+            </a>
             <p className="text-slate-400 mb-6 max-w-sm leading-relaxed">
               3D modellerinizi web'e taşımanın en hızlı ve kolay yolu.
               Profesyonel dönüşüm, optimize etme ve embed çözümleri.
@@ -109,7 +109,7 @@ export default function Footer() {
         <div className="pt-8 border-t border-slate-800">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <p className="text-slate-400 text-sm">
-              © 2025 3D SaaS. Tüm hakları saklıdır.
+              © 2025 3DCloud. Tüm hakları saklıdır.
             </p>
             <div className="flex items-center gap-6 text-sm">
               <a href="#" className="text-slate-400 hover:text-white transition-colors">
