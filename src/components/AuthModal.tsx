@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { X, Loader2 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -15,13 +15,26 @@ export default function AuthModal({ mode, onClose, onSwitchMode }: AuthModalProp
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const { signIn, signUp } = useAuth();
-  const modalRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (modalRef.current) {
-      modalRef.current.scrollTop = 0;
-    }
+    setEmail('');
+    setPassword('');
+    setFullName('');
+    setError('');
   }, [mode]);
+
+  useEffect(() => {
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, []);
+
+  const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (e.target === e.currentTarget) {
+      onClose();
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -50,32 +63,33 @@ export default function AuthModal({ mode, onClose, onSwitchMode }: AuthModalProp
   };
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4" onClick={onClose}>
+    <div
+      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 overflow-y-auto"
+      onClick={handleBackdropClick}
+    >
       <div
-        ref={modalRef}
-        className="bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-y-auto"
+        className="relative bg-slate-900 border border-slate-700/50 rounded-2xl shadow-2xl w-full max-w-md my-8"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-start justify-between p-6 border-b border-slate-800">
-          <div>
-            <h2 className="text-3xl font-bold text-white mb-2">
+        <button
+          onClick={onClose}
+          className="absolute top-4 right-4 z-10 p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-all"
+          type="button"
+        >
+          <X className="w-5 h-5" />
+        </button>
+
+        <div className="p-6 sm:p-8">
+          <div className="mb-6">
+            <h2 className="text-2xl sm:text-3xl font-bold text-white mb-2">
               {mode === 'signup' ? 'Hesap Oluştur' : 'Giriş Yap'}
             </h2>
-            <p className="text-slate-400">
+            <p className="text-slate-400 text-sm sm:text-base">
               {mode === 'signup'
                 ? '3D modellerinizi dönüştürmeye başlayın'
                 : 'Hesabınıza giriş yapın'}
             </p>
           </div>
-          <button
-            onClick={onClose}
-            className="text-slate-400 hover:text-white transition-colors flex-shrink-0 ml-4"
-          >
-            <X className="w-6 h-6" />
-          </button>
-        </div>
-
-        <div className="p-8">
 
           <form onSubmit={handleSubmit} className="space-y-4">
             {mode === 'signup' && (
@@ -87,9 +101,10 @@ export default function AuthModal({ mode, onClose, onSwitchMode }: AuthModalProp
                   type="text"
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
-                  className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                  className="w-full px-4 py-3 bg-slate-800/50 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
                   placeholder="John Doe"
                   required
+                  disabled={loading}
                 />
               </div>
             )}
@@ -102,9 +117,10 @@ export default function AuthModal({ mode, onClose, onSwitchMode }: AuthModalProp
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                className="w-full px-4 py-3 bg-slate-800/50 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
                 placeholder="ornek@email.com"
                 required
+                disabled={loading}
               />
             </div>
 
@@ -116,11 +132,13 @@ export default function AuthModal({ mode, onClose, onSwitchMode }: AuthModalProp
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                className="w-full px-4 py-3 bg-slate-800/50 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
                 placeholder="••••••••"
                 required
                 minLength={6}
+                disabled={loading}
               />
+              <p className="text-xs text-slate-500 mt-1">En az 6 karakter olmalıdır</p>
             </div>
 
             {error && (
@@ -150,7 +168,9 @@ export default function AuthModal({ mode, onClose, onSwitchMode }: AuthModalProp
           <div className="mt-6 text-center">
             <button
               onClick={() => onSwitchMode(mode === 'signup' ? 'signin' : 'signup')}
-              className="text-sm text-slate-400 hover:text-white transition-colors"
+              className="text-sm text-slate-400 hover:text-emerald-400 transition-colors"
+              type="button"
+              disabled={loading}
             >
               {mode === 'signup'
                 ? 'Zaten hesabınız var mı? Giriş yapın'
