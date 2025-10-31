@@ -5,6 +5,9 @@ type ModelViewerProps = {
   src: string;
   poster?: string;
   config: ViewerConfig['config'];
+  selectedPartId?: string | null;
+  partColors?: Record<string, string>;
+  onPartClick?: (partId: string) => void;
 };
 
 declare global {
@@ -15,7 +18,7 @@ declare global {
   }
 }
 
-export default function ModelViewer({ src, poster, config }: ModelViewerProps) {
+export default function ModelViewer({ src, poster, config, selectedPartId, partColors, onPartClick }: ModelViewerProps) {
   const viewerRef = useRef<any>(null);
 
   useEffect(() => {
@@ -24,14 +27,53 @@ export default function ModelViewer({ src, poster, config }: ModelViewerProps) {
 
     const handleLoad = () => {
       console.log('Model loaded successfully');
+
+      if (viewer.model && partColors) {
+        try {
+          const materials = viewer.model.materials;
+          materials.forEach((material: any, index: number) => {
+            const partId = `part_${index + 1}`;
+            if (partColors[partId]) {
+              const color = partColors[partId];
+              const r = parseInt(color.slice(1, 3), 16) / 255;
+              const g = parseInt(color.slice(3, 5), 16) / 255;
+              const b = parseInt(color.slice(5, 7), 16) / 255;
+              material.pbrMetallicRoughness.setBaseColorFactor([r, g, b, 1]);
+            }
+          });
+        } catch (error) {
+          console.error('Error applying part colors:', error);
+        }
+      }
     };
 
     const handleError = (event: any) => {
       console.error('Model loading error:', event);
     };
 
+    const handleClick = (event: any) => {
+      if (!onPartClick || !viewer.model) return;
+
+      const modelIntersection = event.detail.intersection;
+      if (modelIntersection) {
+        try {
+          const material = modelIntersection.material;
+          if (material && viewer.model.materials) {
+            const materialIndex = viewer.model.materials.indexOf(material);
+            if (materialIndex >= 0) {
+              const partId = `part_${materialIndex + 1}`;
+              onPartClick(partId);
+            }
+          }
+        } catch (error) {
+          console.error('Error handling part click:', error);
+        }
+      }
+    };
+
     viewer.addEventListener('load', handleLoad);
     viewer.addEventListener('error', handleError);
+    viewer.addEventListener('click', handleClick);
 
     try {
       if (config.camera?.autoRotate) {
@@ -78,9 +120,10 @@ export default function ModelViewer({ src, poster, config }: ModelViewerProps) {
       if (viewer) {
         viewer.removeEventListener('load', handleLoad);
         viewer.removeEventListener('error', handleError);
+        viewer.removeEventListener('click', handleClick);
       }
     };
-  }, [config, src]);
+  }, [config, src, partColors, selectedPartId, onPartClick]);
 
   const arModes = [];
   if (config.ar?.quickLook) arModes.push('quick-look');

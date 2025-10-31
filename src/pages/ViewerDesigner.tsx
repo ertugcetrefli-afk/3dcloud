@@ -8,10 +8,11 @@ import ARTab from '../components/designer/ARTab';
 import HotspotsTab from '../components/designer/HotspotsTab';
 import MaterialsTab from '../components/designer/MaterialsTab';
 import ThemeTab from '../components/designer/ThemeTab';
+import PartsTab from '../components/designer/PartsTab';
 import EmbedCodeModal from '../components/designer/EmbedCodeModal';
 import ModelViewer from '../components/ModelViewer';
 
-type Tab = 'scene' | 'camera' | 'ar' | 'hotspots' | 'materials' | 'theme';
+type Tab = 'scene' | 'camera' | 'ar' | 'hotspots' | 'materials' | 'theme' | 'parts';
 
 export default function ViewerDesigner() {
   const { user } = useAuth();
@@ -23,6 +24,8 @@ export default function ViewerDesigner() {
   const [showEmbedModal, setShowEmbedModal] = useState(false);
   const [materials, setMaterials] = useState<Material[]>([]);
   const [hotspots, setHotspots] = useState<Hotspot[]>([]);
+  const [selectedPartId, setSelectedPartId] = useState<string | null>(null);
+  const [partColors, setPartColors] = useState<Record<string, string>>({});
 
   const projectId = window.location.pathname.split('/').pop() || '';
 
@@ -172,7 +175,18 @@ export default function ViewerDesigner() {
     );
   }
 
+  const handlePartSelect = (partId: string) => {
+    setSelectedPartId(partId);
+  };
+
+  const handlePartUpdate = (partId: string, updates: { visible?: boolean; color?: string }) => {
+    if (updates.color) {
+      setPartColors(prev => ({ ...prev, [partId]: updates.color! }));
+    }
+  };
+
   const tabs: { id: Tab; label: string; icon: string }[] = [
+    { id: 'parts', label: 'Parçalar', icon: '🧩' },
     { id: 'scene', label: 'Sahne', icon: '🌅' },
     { id: 'camera', label: 'Kamera', icon: '📷' },
     { id: 'ar', label: 'AR', icon: '📱' },
@@ -249,6 +263,14 @@ export default function ViewerDesigner() {
             </div>
 
             <div className="p-6">
+              {activeTab === 'parts' && (
+                <PartsTab
+                  projectId={projectId!}
+                  onPartSelect={handlePartSelect}
+                  onPartUpdate={handlePartUpdate}
+                  selectedPartId={selectedPartId}
+                />
+              )}
               {activeTab === 'scene' && (
                 <SceneTab config={config.scene || {}} onChange={(val) => updateConfig('scene', val)} />
               )}
@@ -282,6 +304,9 @@ export default function ViewerDesigner() {
                     src={project.glb_url}
                     poster={project.poster_url || undefined}
                     config={config}
+                    selectedPartId={selectedPartId}
+                    partColors={partColors}
+                    onPartClick={handlePartSelect}
                   />
                 ) : (
                   <>
