@@ -23,40 +23,46 @@ export default function ModelViewer({ src, poster, config }: ModelViewerProps) {
     if (!viewer) return;
 
     const handleLoad = () => {
-      console.log('Model loaded successfully:', src);
+
     };
 
     const handleError = (event: any) => {
-      console.error('Model viewer error:', event.detail || event);
+
     };
 
     viewer.addEventListener('load', handleLoad);
     viewer.addEventListener('error', handleError);
 
-    if (config.camera?.autoRotate) {
-      viewer.setAttribute('auto-rotate', '');
-      if (config.camera.autoRotateSpeed) {
-        viewer.setAttribute('auto-rotate-delay', '0');
+    try {
+      if (config.camera?.autoRotate) {
+        viewer.setAttribute('auto-rotate', '');
+        if (config.camera.autoRotateSpeed) {
+          viewer.setAttribute('auto-rotate-delay', '0');
+        }
+      } else {
+        viewer.removeAttribute('auto-rotate');
       }
-    } else {
-      viewer.removeAttribute('auto-rotate');
-    }
 
-    if (config.scene?.exposure) {
-      viewer.setAttribute('exposure', config.scene.exposure.toString());
-    }
+      if (config.scene?.exposure) {
+        viewer.setAttribute('exposure', config.scene.exposure.toString());
+      }
 
-    if (config.scene?.shadowIntensity !== undefined) {
-      viewer.setAttribute('shadow-intensity', config.scene.shadowIntensity.toString());
-    }
+      if (config.scene?.shadowIntensity !== undefined) {
+        viewer.setAttribute('shadow-intensity', config.scene.shadowIntensity.toString());
+      }
 
-    if (config.scene?.environmentImage && config.scene.environmentImage !== 'none') {
-      viewer.setAttribute('environment-image', 'neutral');
+      if (config.scene?.environmentImage && config.scene.environmentImage !== 'none') {
+        viewer.setAttribute('environment-image', 'neutral');
+      }
+    } catch (error) {
+
     }
 
     return () => {
-      viewer.removeEventListener('load', handleLoad);
-      viewer.removeEventListener('error', handleError);
+      if (viewer) {
+        viewer.removeEventListener('load', handleLoad);
+        viewer.removeEventListener('error', handleError);
+      }
     };
   }, [config, src]);
 

@@ -187,7 +187,6 @@ export default function FileUploadModal({ onClose, onUploadComplete }: FileUploa
       onUploadComplete();
       onClose();
     } catch (err: any) {
-      console.error('Upload error:', err);
       setError(err.message || 'Yükleme başarısız oldu');
       setUploading(false);
       setUploadProgress(null);

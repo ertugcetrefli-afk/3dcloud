@@ -88,7 +88,6 @@ export default function Pricing() {
       alert(`${planName} planına yükseltildiniz!`);
       window.location.href = '/dashboard';
     } catch (error) {
-      console.error('Error upgrading plan:', error);
       alert('Plan yükseltme başarısız oldu');
     } finally {
       setUpgrading(false);

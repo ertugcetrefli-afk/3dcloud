@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { User, AuthError } from '@supabase/supabase-js';
 import { supabase, Profile } from '../lib/supabase';
 
@@ -19,44 +19,79 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const fetchProfile = async (userId: string) => {
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', userId)
-      .maybeSingle();
+  const fetchProfile = useCallback(async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .maybeSingle();
 
-    if (error) {
-      console.error('Error fetching profile:', error);
+      if (error) {
+        throw error;
+      }
+
+      return data;
+    } catch (error) {
       return null;
     }
-
-    return data;
-  };
+  }, []);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        fetchProfile(session.user.id).then(setProfile);
+    let mounted = true;
+
+    const initializeAuth = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+
+        if (!mounted) return;
+
+        setUser(session?.user ?? null);
+
+        if (session?.user) {
+          const profileData = await fetchProfile(session.user.id);
+          if (mounted) {
+            setProfile(profileData);
+          }
+        }
+      } catch (error) {
+        if (mounted) {
+          setUser(null);
+          setProfile(null);
+        }
+      } finally {
+        if (mounted) {
+          setLoading(false);
+        }
       }
-      setLoading(false);
-    });
+    };
+
+    initializeAuth();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       (async () => {
+        if (!mounted) return;
+
         setUser(session?.user ?? null);
+
         if (session?.user) {
           const profileData = await fetchProfile(session.user.id);
-          setProfile(profileData);
+          if (mounted) {
+            setProfile(profileData);
+          }
         } else {
-          setProfile(null);
+          if (mounted) {
+            setProfile(null);
+          }
         }
       })();
     });
 
-    return () => subscription.unsubscribe();
-  }, []);
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
+  }, [fetchProfile]);
 
   const signUp = async (email: string, password: string, fullName: string) => {
     try {
@@ -66,12 +101,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       });
 
       if (error) {
-        console.error('Signup error:', error);
         return { error };
       }
 
       if (!data.user) {
-        return { error: { message: 'Kullanıcı oluşturulamadı' } as any };
+        return { error: { message: 'Kullanıcı oluşturulamadı', name: 'SignUpError', status: 400 } as AuthError };
       }
 
       const { error: profileError } = await supabase.from('profiles').insert({
@@ -83,8 +117,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       });
 
       if (profileError) {
-        console.error('Error creating profile:', profileError);
-        return { error: { message: 'Profil oluşturulamadı: ' + profileError.message } as any };
+        return { error: { message: 'Profil oluşturulamadı: ' + profileError.message, name: 'ProfileError', status: 500 } as AuthError };
       }
 
       const profileData = await fetchProfile(data.user.id);
@@ -92,8 +125,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       return { error: null };
     } catch (err) {
-      console.error('Unexpected signup error:', err);
-      return { error: { message: 'Beklenmeyen bir hata oluştu' } as any };
+      return { error: { message: 'Beklenmeyen bir hata oluştu', name: 'UnexpectedError', status: 500 } as AuthError };
     }
   };
 

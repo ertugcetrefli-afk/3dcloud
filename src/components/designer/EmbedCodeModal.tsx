@@ -20,43 +20,29 @@ export default function EmbedCodeModal({ project, config, onClose }: EmbedCodeMo
     if (config.ar?.sceneViewer) arModes.push('scene-viewer');
     if (config.ar?.webXR) arModes.push('webxr');
 
-    return `<model-viewer
-  src="${project.glb_url || 'https://cdn.example.com/model.glb'}"
-  poster="${project.poster_url || 'https://cdn.example.com/poster.jpg'}"
-  ${arModes.length > 0 ? `ar ar-modes="${arModes.join(' ')}"` : ''}
-  camera-controls
-  ${config.camera?.autoRotate ? 'auto-rotate' : ''}
-  shadow-intensity="${config.scene?.shadowIntensity || 0.5}"
-  exposure="${config.scene?.exposure || 1}"
-  style="width: 100%; height: 500px;"
-  ${config.scene?.background ? `background-color="${config.scene.background}"` : ''}
->
-</model-viewer>
+    const attributes = [
+      `src="${project.glb_url || 'https://cdn.example.com/model.glb'}"`,
+      `poster="${project.poster_url || 'https://cdn.example.com/poster.jpg'}"`,
+      arModes.length > 0 ? `ar ar-modes="${arModes.join(' ')}"` : null,
+      'camera-controls',
+      config.camera?.autoRotate ? 'auto-rotate' : null,
+      `shadow-intensity="${config.scene?.shadowIntensity ?? 0.5}"`,
+      `exposure="${config.scene?.exposure ?? 1}"`,
+      'style="width: 100%; height: 500px;"',
+      config.scene?.background ? `background-color="${config.scene.background}"` : null,
+    ].filter(Boolean);
 
-<!-- Include model-viewer script -->
-<script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>`;
+    return `<model-viewer\n  ${attributes.join('\n  ')}\n></model-viewer>\n\n<!-- Include model-viewer script -->\n<script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>`;
   };
 
   const generateReactCode = () => {
-    return `import '@google/model-viewer';
+    const hasAR = config.ar?.quickLook || config.ar?.sceneViewer || config.ar?.webXR;
+    const arModes = [];
+    if (config.ar?.quickLook) arModes.push('quick-look');
+    if (config.ar?.sceneViewer) arModes.push('scene-viewer');
+    if (config.ar?.webXR) arModes.push('webxr');
 
-function ModelViewer() {
-  return (
-    <model-viewer
-      src="${project.glb_url || 'https://cdn.example.com/model.glb'}"
-      poster="${project.poster_url || 'https://cdn.example.com/poster.jpg'}"
-      ${config.ar?.quickLook || config.ar?.sceneViewer || config.ar?.webXR ? 'ar' : ''}
-      camera-controls
-      ${config.camera?.autoRotate ? 'auto-rotate' : ''}
-      shadow-intensity="${config.scene?.shadowIntensity || 0.5}"
-      exposure="${config.scene?.exposure || 1}"
-      style={{ width: '100%', height: '500px' }}
-      ${config.scene?.background ? `background-color="${config.scene.background}"` : ''}
-    />
-  );
-}
-
-export default ModelViewer;`;
+    return `import '@google/model-viewer';\n\nfunction ModelViewer() {\n  return (\n    <model-viewer\n      src="${project.glb_url || 'https://cdn.example.com/model.glb'}"\n      poster="${project.poster_url || 'https://cdn.example.com/poster.jpg'}"${hasAR ? `\n      ar\n      ar-modes="${arModes.join(' ')}"` : ''}\n      camera-controls${config.camera?.autoRotate ? '\n      auto-rotate' : ''}\n      shadow-intensity="${config.scene?.shadowIntensity ?? 0.5}"\n      exposure="${config.scene?.exposure ?? 1}"\n      style={{ width: '100%', height: '500px' }}${config.scene?.background ? `\n      background-color="${config.scene.background}"` : ''}\n    />\n  );\n}\n\nexport default ModelViewer;`;
   };
 
   const generateJavaScriptCode = () => {

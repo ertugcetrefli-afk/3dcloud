@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase, Project } from '../lib/supabase';
 import { Plus, Upload, Settings, Box, Clock, CheckCircle, AlertCircle, Trash2 } from 'lucide-react';
@@ -10,41 +10,48 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [showUploadModal, setShowUploadModal] = useState(false);
 
+  const fetchProjects = useCallback(async () => {
+    if (!user?.id) return;
+
+    setLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('projects')
+        .select('*')
+        .eq('user_id', user.id)
+        .is('deleted_at', null)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      setProjects(data || []);
+    } catch (error) {
+      setProjects([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [user?.id]);
+
   useEffect(() => {
     if (user) {
       fetchProjects();
     }
-  }, [user]);
-
-  const fetchProjects = async () => {
-    setLoading(true);
-    const { data, error } = await supabase
-      .from('projects')
-      .select('*')
-      .eq('user_id', user?.id)
-      .is('deleted_at', null)
-      .order('created_at', { ascending: false });
-
-    if (error) {
-      console.error('Error fetching projects:', error);
-    } else {
-      setProjects(data || []);
-    }
-    setLoading(false);
-  };
+  }, [user, fetchProjects]);
 
   const deleteProject = async (projectId: string) => {
     if (!confirm('Bu projeyi silmek istediğinizden emin misiniz?')) return;
 
-    const { error } = await supabase
-      .from('projects')
-      .update({ deleted_at: new Date().toISOString() })
-      .eq('id', projectId);
+    try {
+      const { error } = await supabase
+        .from('projects')
+        .update({ deleted_at: new Date().toISOString() })
+        .eq('id', projectId);
 
-    if (error) {
-      console.error('Error deleting project:', error);
-    } else {
-      fetchProjects();
+      if (error) throw error;
+
+      await fetchProjects();
+    } catch (error) {
+      alert('Proje silinirken bir hata oluştu');
     }
   };
 

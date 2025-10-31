@@ -36,7 +36,6 @@ export default function AuthModal({ mode, onClose, onSwitchMode }: AuthModalProp
         onClose();
       }
     } catch (err: any) {
-      console.error('Auth error:', err);
       setError(err.message || 'Bir hata oluştu');
     } finally {
       setLoading(false);

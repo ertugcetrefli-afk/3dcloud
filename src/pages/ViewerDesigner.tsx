@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase, Project, ViewerConfig, Material, Hotspot } from '../lib/supabase';
 import { Save, Code, Undo, Redo, RotateCcw, ArrowLeft } from 'lucide-react';
@@ -24,7 +24,76 @@ export default function ViewerDesigner() {
   const [materials, setMaterials] = useState<Material[]>([]);
   const [hotspots, setHotspots] = useState<Hotspot[]>([]);
 
-  const projectId = window.location.pathname.split('/').pop();
+  const projectId = window.location.pathname.split('/').pop() || '';
+
+  const loadProject = useCallback(async () => {
+    if (!projectId || !user?.id) return;
+
+    setLoading(true);
+    try {
+      const { data: projectData, error: projectError } = await supabase
+        .from('projects')
+        .select('*')
+        .eq('id', projectId)
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (projectError) throw projectError;
+
+      setProject(projectData);
+
+      if (projectData) {
+        const { data: configData } = await supabase
+          .from('viewer_configs')
+          .select('*')
+          .eq('project_id', projectId)
+          .eq('is_active', true)
+          .maybeSingle();
+
+        if (configData) {
+          setConfig(configData.config);
+        }
+      }
+    } catch (error) {
+      setProject(null);
+    } finally {
+      setLoading(false);
+    }
+  }, [projectId, user?.id]);
+
+  const loadMaterials = useCallback(async () => {
+    if (!user?.id) return;
+
+    try {
+      const { data } = await supabase
+        .from('materials')
+        .select('*')
+        .or(`user_id.eq.${user.id},type.eq.library`);
+
+      if (data) {
+        setMaterials(data);
+      }
+    } catch (error) {
+      setMaterials([]);
+    }
+  }, [user?.id]);
+
+  const loadHotspots = useCallback(async () => {
+    if (!projectId) return;
+
+    try {
+      const { data } = await supabase
+        .from('hotspots')
+        .select('*')
+        .eq('project_id', projectId);
+
+      if (data) {
+        setHotspots(data);
+      }
+    } catch (error) {
+      setHotspots([]);
+    }
+  }, [projectId]);
 
   useEffect(() => {
     if (user && projectId) {
@@ -32,59 +101,7 @@ export default function ViewerDesigner() {
       loadMaterials();
       loadHotspots();
     }
-  }, [user, projectId]);
-
-  const loadProject = async () => {
-    setLoading(true);
-    const { data: projectData, error: projectError } = await supabase
-      .from('projects')
-      .select('*')
-      .eq('id', projectId)
-      .eq('user_id', user?.id)
-      .maybeSingle();
-
-    if (projectError) {
-      console.error('Error loading project:', projectError);
-      return;
-    }
-
-    setProject(projectData);
-
-    const { data: configData } = await supabase
-      .from('viewer_configs')
-      .select('*')
-      .eq('project_id', projectId)
-      .eq('is_active', true)
-      .maybeSingle();
-
-    if (configData) {
-      setConfig(configData.config);
-    }
-
-    setLoading(false);
-  };
-
-  const loadMaterials = async () => {
-    const { data } = await supabase
-      .from('materials')
-      .select('*')
-      .or(`user_id.eq.${user?.id},type.eq.library`);
-
-    if (data) {
-      setMaterials(data);
-    }
-  };
-
-  const loadHotspots = async () => {
-    const { data } = await supabase
-      .from('hotspots')
-      .select('*')
-      .eq('project_id', projectId);
-
-    if (data) {
-      setHotspots(data);
-    }
-  };
+  }, [user, projectId, loadProject, loadMaterials, loadHotspots]);
 
   const handleSave = async () => {
     if (!projectId || !user) return;
@@ -103,7 +120,7 @@ export default function ViewerDesigner() {
 
       const newVersion = (existingConfig?.version || 0) + 1;
 
-      await supabase.from('viewer_configs').insert({
+      const { error } = await supabase.from('viewer_configs').insert({
         project_id: projectId,
         user_id: user.id,
         config: config,
@@ -111,9 +128,10 @@ export default function ViewerDesigner() {
         is_active: true,
       });
 
+      if (error) throw error;
+
       alert('Değişiklikler kaydedildi!');
     } catch (error) {
-      console.error('Error saving config:', error);
       alert('Kaydetme başarısız oldu');
     } finally {
       setSaving(false);
