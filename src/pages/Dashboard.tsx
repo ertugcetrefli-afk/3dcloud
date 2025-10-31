@@ -1,11 +1,13 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase, Project } from '../lib/supabase';
-import { Plus, Upload, Settings, Box, Clock, CheckCircle, AlertCircle, Trash2, Download, Share2, Copy } from 'lucide-react';
+import { Plus, Upload, Settings, Box, Clock, CheckCircle, AlertCircle, Trash2, Download, Share2, Copy, Home, ArrowLeft } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import FileUploadModal from '../components/FileUploadModal';
 
 export default function Dashboard() {
   const { user, profile } = useAuth();
+  const navigate = useNavigate();
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [showUploadModal, setShowUploadModal] = useState(false);
@@ -185,13 +187,22 @@ export default function Dashboard() {
             <h1 className="text-3xl font-bold text-white mb-2">Dashboard</h1>
             <p className="text-slate-400">3D modellerinizi yönetin ve düzenleyin</p>
           </div>
-          <button
-            onClick={() => setShowUploadModal(true)}
-            className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-emerald-500 to-cyan-500 rounded-xl font-semibold text-white hover:shadow-xl hover:shadow-emerald-500/50 transition-all duration-300"
-          >
-            <Plus className="w-5 h-5" />
-            Yeni Proje
-          </button>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => navigate('/')}
+              className="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-lg transition-colors"
+            >
+              <Home className="w-4 h-4" />
+              Anasayfa
+            </button>
+            <button
+              onClick={() => setShowUploadModal(true)}
+              className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-emerald-500 to-cyan-500 rounded-xl font-semibold text-white hover:shadow-xl hover:shadow-emerald-500/50 transition-all duration-300"
+            >
+              <Plus className="w-5 h-5" />
+              Yeni Proje
+            </button>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">

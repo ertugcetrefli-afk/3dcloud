@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
-import { BarChart3, Users, Box, Eye, Download, Share2, TrendingUp, Calendar, Activity } from 'lucide-react';
+import { BarChart3, Users, Box, Eye, Download, Share2, TrendingUp, Calendar, Activity, ArrowLeft, Home } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 interface AnalyticsData {
   totalUsers: number;
@@ -18,9 +19,10 @@ interface AnalyticsData {
 
 export default function AdminPanel() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'projects' | 'activity'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'projects' | 'activity' | 'homepage' | 'showcase'>('overview');
 
   useEffect(() => {
     if (user) {
@@ -152,9 +154,27 @@ export default function AdminPanel() {
   return (
     <div className="min-h-screen bg-slate-950">
       <div className="max-w-7xl mx-auto px-6 py-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-white mb-2">Admin Paneli</h1>
-          <p className="text-slate-400">Platform istatistikleri ve analitikler</p>
+        <div className="mb-8 flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-white mb-2">Admin Paneli</h1>
+            <p className="text-slate-400">Platform istatistikleri ve analitikler</p>
+          </div>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => navigate('/dashboard')}
+              className="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-lg transition-colors"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              Dashboard
+            </button>
+            <button
+              onClick={() => navigate('/')}
+              className="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-lg transition-colors"
+            >
+              <Home className="w-4 h-4" />
+              Anasayfa
+            </button>
+          </div>
         </div>
 
         <div className="flex gap-4 mb-8 border-b border-slate-800">
