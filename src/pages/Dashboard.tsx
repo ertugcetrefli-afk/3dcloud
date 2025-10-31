@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase, Project } from '../lib/supabase';
-import { Plus, Upload, Settings, Box, Clock, CheckCircle, AlertCircle, Trash2 } from 'lucide-react';
+import { Plus, Upload, Settings, Box, Clock, CheckCircle, AlertCircle, Trash2, Download, Share2, Copy } from 'lucide-react';
 import FileUploadModal from '../components/FileUploadModal';
 
 export default function Dashboard() {
@@ -52,6 +52,68 @@ export default function Dashboard() {
       await fetchProjects();
     } catch (error) {
       alert('Proje silinirken bir hata oluştu');
+    }
+  };
+
+  const downloadProject = async (project: Project) => {
+    if (!project.glb_url) return;
+
+    try {
+      const response = await fetch(project.glb_url);
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${project.name}.glb`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+
+      await supabase.from('usage_logs').insert({
+        user_id: user!.id,
+        project_id: project.id,
+        event_type: 'download',
+        metadata: { format: 'glb' },
+      });
+    } catch (error) {
+      alert('İndirme başarısız oldu');
+    }
+  };
+
+  const shareProject = async (projectId: string) => {
+    try {
+      const { data: existingShare } = await supabase
+        .from('project_shares')
+        .select('share_token')
+        .eq('project_id', projectId)
+        .eq('is_active', true)
+        .maybeSingle();
+
+      let shareToken;
+
+      if (existingShare) {
+        shareToken = existingShare.share_token;
+      } else {
+        const { data: newShare, error } = await supabase
+          .from('project_shares')
+          .insert({
+            project_id: projectId,
+            created_by: user!.id,
+            is_active: true,
+          })
+          .select('share_token')
+          .single();
+
+        if (error) throw error;
+        shareToken = newShare.share_token;
+      }
+
+      const shareUrl = `${window.location.origin}/share/${shareToken}`;
+      await navigator.clipboard.writeText(shareUrl);
+      alert('Paylaşım linki kopyalandı!');
+    } catch (error) {
+      alert('Paylaşım linki oluşturulamadı');
     }
   };
 
@@ -221,22 +283,49 @@ export default function Dashboard() {
                     <span>•</span>
                     <span>{(project.file_size / 1024 / 1024).toFixed(2)} MB</span>
                   </div>
-                  <div className="flex gap-2">
+                  <div className="space-y-2">
                     {project.status === 'completed' && (
-                      <a
-                        href={`/designer/${project.id}`}
-                        className="flex-1 px-4 py-2 bg-emerald-500/20 text-emerald-400 rounded-lg font-medium hover:bg-emerald-500/30 transition-colors text-center text-sm"
-                      >
-                        Düzenle
-                      </a>
+                      <>
+                        <a
+                          href={`/designer/${project.id}`}
+                          className="w-full block px-4 py-2 bg-emerald-500/20 text-emerald-400 rounded-lg font-medium hover:bg-emerald-500/30 transition-colors text-center text-sm"
+                        >
+                          Düzenle
+                        </a>
+                        <div className="grid grid-cols-3 gap-2">
+                          <button
+                            onClick={() => downloadProject(project)}
+                            className="px-3 py-2 bg-blue-500/20 text-blue-400 rounded-lg hover:bg-blue-500/30 transition-colors flex items-center justify-center"
+                            title="İndir"
+                          >
+                            <Download className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => shareProject(project.id)}
+                            className="px-3 py-2 bg-cyan-500/20 text-cyan-400 rounded-lg hover:bg-cyan-500/30 transition-colors flex items-center justify-center"
+                            title="Paylaş"
+                          >
+                            <Share2 className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => deleteProject(project.id)}
+                            className="px-3 py-2 bg-red-500/20 text-red-400 rounded-lg hover:bg-red-500/30 transition-colors flex items-center justify-center"
+                            title="Sil"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </>
                     )}
-                    <button
-                      onClick={() => deleteProject(project.id)}
-                      className="px-4 py-2 bg-red-500/20 text-red-400 rounded-lg hover:bg-red-500/30 transition-colors"
-                      title="Sil"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+                    {project.status !== 'completed' && (
+                      <button
+                        onClick={() => deleteProject(project.id)}
+                        className="w-full px-4 py-2 bg-red-500/20 text-red-400 rounded-lg hover:bg-red-500/30 transition-colors flex items-center justify-center gap-2"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                        Sil
+                      </button>
+                    )}
                   </div>
                   {project.error_message && (
                     <p className="mt-3 text-xs text-red-400 bg-red-500/10 px-3 py-2 rounded">
