@@ -43,8 +43,11 @@ export default function AuthModal({ mode, onClose, onSwitchMode }: AuthModalProp
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl w-full max-w-md relative max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4" onClick={onClose}>
+      <div
+        className="bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl w-full max-w-md relative max-h-[90vh] overflow-y-auto"
+        onClick={(e) => e.stopPropagation()}
+      >
         <button
           onClick={onClose}
           className="absolute top-4 right-4 text-slate-400 hover:text-white transition-colors z-10"
@@ -52,8 +55,8 @@ export default function AuthModal({ mode, onClose, onSwitchMode }: AuthModalProp
           <X className="w-6 h-6" />
         </button>
 
-        <div className="p-8">
-          <h2 className="text-3xl font-bold text-white mb-2">
+        <div className="p-8 pt-12">
+          <h2 className="text-3xl font-bold text-white mb-3">
             {mode === 'signup' ? 'Hesap Oluştur' : 'Giriş Yap'}
           </h2>
           <p className="text-slate-400 mb-8">
